@@ -44,6 +44,20 @@ function safePath(path) {
   return /^(main|branches\/[a-z0-9._-]+|pulls\/[1-9][0-9]*)\/$/.test(path);
 }
 
+function formatLocalTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
 function baseBenchmarkName(name) {
   const packageIndex = name.indexOf(" (");
   return packageIndex < 0 ? name : name.slice(0, packageIndex);
@@ -407,7 +421,9 @@ async function loadSeries(series) {
   elements.seriesTitle.textContent = series.label;
   elements.commitLink.textContent = series.sha ? series.sha.slice(0, 12) : "";
   elements.commitLink.href = series.sourceUrl || "#";
-  elements.updatedAt.textContent = series.updatedAt ? new Date(series.updatedAt).toLocaleString() : "";
+  elements.updatedAt.dateTime = series.updatedAt || "";
+  elements.updatedAt.textContent = series.updatedAt ? formatLocalTime(series.updatedAt) : "";
+  elements.updatedAt.title = series.updatedAt ? `UTC: ${series.updatedAt}` : "";
   try {
     state.data = await readBenchmarkData(series.path);
     const repository = state.data.repoUrl || `https://github.com/${location.hostname.split(".")[0]}/llgo`;
