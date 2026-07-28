@@ -31,15 +31,6 @@ jobs:
           ref: pages
           path: _site
 
-      - name: Check out benchmark site
-        uses: actions/checkout@v7
-        with:
-          ref: main
-          path: _source
-
-      - name: Add site presentation
-        run: cp -R _source/site/. _site/
-
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
