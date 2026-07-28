@@ -29,6 +29,16 @@ jobs:
         uses: actions/checkout@v7
         with:
           ref: pages
+          path: _site
+
+      - name: Check out benchmark site
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: _source
+
+      - name: Add site presentation
+        run: cp -R _source/site/. _site/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -36,7 +46,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: .
+          path: _site
 
       - name: Deploy GitHub Pages
         id: deployment

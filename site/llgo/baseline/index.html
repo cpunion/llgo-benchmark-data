@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LLGo baseline benchmarks</title>
+    <style>
+      :root {
+        color: #202426;
+        background: #f4f6f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        margin: 0;
+      }
+      header,
+      main {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+      header {
+        padding: 32px 0 20px;
+        border-bottom: 1px solid #cfd5d2;
+      }
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        letter-spacing: 0;
+      }
+      main {
+        padding: 20px 0 48px;
+      }
+      nav {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+      }
+      button {
+        border: 1px solid #aeb8b3;
+        border-radius: 4px;
+        padding: 7px 12px;
+        color: #202426;
+        background: #fff;
+        cursor: pointer;
+      }
+      button[aria-selected="true"] {
+        color: #fff;
+        border-color: #196b4b;
+        background: #196b4b;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+      }
+      th,
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #dce1de;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        font-size: 13px;
+        color: #59615d;
+        background: #edf1ef;
+      }
+      a {
+        color: #075ea8;
+      }
+      code {
+        font-size: 12px;
+      }
+      .empty {
+        padding: 32px 12px;
+        color: #59615d;
+        text-align: center;
+      }
+      @media (max-width: 680px) {
+        .commit-column {
+          display: none;
+        }
+        th,
+        td {
+          padding: 9px 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>LLGo baseline benchmarks</h1>
+    </header>
+    <main>
+      <nav aria-label="Benchmark series">
+        <button type="button" data-kind="main" aria-selected="true">Main</button>
+        <button type="button" data-kind="branch" aria-selected="false">Branches</button>
+        <button type="button" data-kind="pull" aria-selected="false">Pull requests</button>
+      </nav>
+      <table>
+        <thead>
+          <tr>
+            <th>Series</th>
+            <th>Updated</th>
+            <th class="commit-column">Commit</th>
+          </tr>
+        </thead>
+        <tbody id="series">
+          <tr><td class="empty" colspan="3">Loading benchmark history...</td></tr>
+        </tbody>
+      </table>
+    </main>
+    <script>
+      "use strict";
+      const body = document.getElementById("series");
+      let allSeries = [];
+      let activeKind = "main";
+
+      function render() {
+        body.replaceChildren();
+        const rows = allSeries.filter((item) => item.kind === activeKind);
+        if (rows.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.className = "empty";
+          cell.colSpan = 3;
+          cell.textContent = "No benchmark history for this series.";
+          row.appendChild(cell);
+          body.appendChild(row);
+          return;
+        }
+        for (const item of rows) {
+          const row = document.createElement("tr");
+          const nameCell = document.createElement("td");
+          const chart = document.createElement("a");
+          chart.href = item.path;
+          chart.textContent = item.label;
+          nameCell.appendChild(chart);
+
+          const dateCell = document.createElement("td");
+          dateCell.textContent = new Date(item.updatedAt).toLocaleString();
+
+          const commitCell = document.createElement("td");
+          commitCell.className = "commit-column";
+          const commit = document.createElement("a");
+          const code = document.createElement("code");
+          commit.href = item.sourceUrl;
+          code.textContent = item.sha.slice(0, 12);
+          commit.appendChild(code);
+          commitCell.appendChild(commit);
+
+          row.append(nameCell, dateCell, commitCell);
+          body.appendChild(row);
+        }
+      }
+
+      for (const button of document.querySelectorAll("button[data-kind]")) {
+        button.addEventListener("click", () => {
+          activeKind = button.dataset.kind;
+          for (const item of document.querySelectorAll("button[data-kind]")) {
+            item.setAttribute("aria-selected", String(item === button));
+          }
+          render();
+        });
+      }
+
+      fetch("series.json", { cache: "no-store" })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          allSeries = Array.isArray(data.series) ? data.series : [];
+          render();
+        })
+        .catch((error) => {
+          body.innerHTML = "";
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.className = "empty";
+          cell.colSpan = 3;
+          cell.textContent = `Unable to load benchmark history: ${error.message}`;
+          row.appendChild(cell);
+          body.appendChild(row);
+        });
+    </script>
+  </body>
+</html>
