@@ -1,8 +1,8 @@
 name: Deploy benchmark Pages
 
 on:
-  repository_dispatch:
-    types: [llgo-baseline-published]
+  push:
+    branches: [pages]
   workflow_dispatch:
 
 permissions:
@@ -16,10 +16,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.client_payload.source_repository ==
-      format('{0}/llgo', github.repository_owner)
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
@@ -30,15 +26,6 @@ jobs:
         with:
           ref: pages
           path: _site
-
-      - name: Check out benchmark site
-        uses: actions/checkout@v7
-        with:
-          ref: main
-          path: _source
-
-      - name: Add site presentation
-        run: cp -R _source/site/. _site/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
